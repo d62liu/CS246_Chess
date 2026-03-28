@@ -1,22 +1,7 @@
 export module pieces;
 
-import <memory>;
-import <string>;
-import <vector>;
-import board;
-
-export enum Color { White, Black };
-export enum class PieceType { Pawn, Rook, Knight, Bishop, Queen, King };
-
-export class Position {
-public:
-    Position(int x, int y);
-    int getX() const;
-    int getY() const;
-private:
-    int x;
-    int y;
-};
+import std;
+import types;
 
 export class ChessPiece {
 public:
@@ -25,49 +10,58 @@ public:
     PieceType getPieceType() const;
     Position getPosition() const;
     bool hasMoved() const;
-    virtual std::vector<Position> get_valid_moves(Board& board) const = 0;
+    void setMoved(bool moved);
+    void setPosition(Position newPos);
+    virtual std::vector<Position> get_valid_moves() const = 0;
+    virtual char symbol() const = 0;
     virtual ~ChessPiece() = default;
 protected:
-    bool has_moved;
     Color color;
     Position pos;
     PieceType piece_type;
+    bool has_moved;
 };
 
 export class Pawn : public ChessPiece {
 public:
     Pawn(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export class Rook : public ChessPiece {
 public:
     Rook(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export class Knight : public ChessPiece {
 public:
     Knight(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export class Bishop : public ChessPiece {
 public:
     Bishop(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export class Queen : public ChessPiece {
 public:
     Queen(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export class King : public ChessPiece {
 public:
     King(Color color, Position pos);
-    std::vector<Position> get_valid_moves(Board& board) const override;
+    std::vector<Position> get_valid_moves() const override;
+    char symbol() const override;
 };
 
 export std::unique_ptr<ChessPiece> makePiece(PieceType type, Color color, Position pos);
