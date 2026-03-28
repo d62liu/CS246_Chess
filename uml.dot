@@ -1,0 +1,114 @@
+digraph UML {
+    rankdir=TB;
+    fontname="Helvetica";
+    node [shape=record, fontname="Helvetica", fontsize=9];
+    edge [fontname="Helvetica", fontsize=8];
+    nodesep=0.3;
+    ranksep=0.5;
+
+    // Force a narrower canvas
+    size="8.5,11!";
+    margin=0.25;
+
+    // ===== CONTROLLER LAYER =====
+    ChessProgram [label="{ChessProgram|+ run() : void\l+ setupMode() : void\l+ printScores() : void\l}"];
+
+    // ===== GAME + BOARD LAYER =====
+    Game [label="{Game|+ play() : void\l+ resign() : void\l+ isOver() : bool\l+ getResult() : string\l}"];
+    Board [label="{Board|+ init() : void\l+ makeMove(Move) : void\l+ undoMove() : void\l+ allLegalMoves(Colour) : vector\<Move\>\l+ isInCheck(Colour) : bool\l+ isCheckmate(Colour) : bool\l+ isStalemate(Colour) : bool\l+ placePiece(Position, char) : void\l+ removePiece(Position) : void\l+ getPiece(Position) : Piece*\l}"];
+
+    // ===== ABSTRACT BASES =====
+    Subject [label="{«abstract» Subject|+ attach(Observer*) : void\l+ detach(Observer*) : void\l+ notifyObservers() : void\l}"];
+    Observer [label="{«abstract» Observer|+ notify(Position, Piece*) : void\l}"];
+    Player [label="{«abstract» Player|# colour : Colour\l|+ getMove(Board\&) : Move\l}"];
+    Piece [label="{«abstract» Piece|# colour : Colour\l# pos : Position\l# moved : bool\l|+ pseudoLegalMoves(Board\&) : vector\<Move\>\l+ symbol() : char\l+ clone() : unique_ptr\<Piece\>\l}"];
+    Strategy [label="{«abstract» Strategy|+ pickMove(Board\&, Colour) : Move\l}"];
+
+    // ===== CONCRETE OBSERVERS =====
+    TextDisplay [label="{TextDisplay|+ notify(Position, Piece*) : void\l+ render() : void\l}"];
+    GraphicsDisplay [label="{GraphicsDisplay|+ notify(Position, Piece*) : void\l+ render() : void\l}"];
+    Xwindow [label="{Xwindow|+ drawRect(x,y,w,h,colour) : void\l+ drawString(x,y,msg) : void\l}"];
+
+    // ===== CONCRETE PLAYERS =====
+    HumanPlayer [label="{HumanPlayer|+ getMove(Board\&) : Move\l}"];
+    ComputerPlayer [label="{ComputerPlayer|+ getMove(Board\&) : Move\l}"];
+
+    // ===== CONCRETE PIECES =====
+    King [label="{King|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    Queen [label="{Queen|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    Rook [label="{Rook|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    Bishop [label="{Bishop|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    Knight [label="{Knight|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    Pawn [label="{Pawn|+ pseudoLegalMoves()\l+ symbol()\l}"];
+
+    // ===== CONCRETE STRATEGIES =====
+    Level1Strategy [label="{Level1Strategy|+ pickMove()\l}"];
+    Level2Strategy [label="{Level2Strategy|+ pickMove()\l}"];
+    Level3Strategy [label="{Level3Strategy|+ pickMove()\l}"];
+    Level4Strategy [label="{Level4Strategy|+ pickMove()\l}"];
+
+    // ===== FACTORIES =====
+    PieceFactory [label="{PieceFactory|+ create(char, Position)\l}" style=filled fillcolor="#f0f0f0"];
+    StrategyFactory [label="{StrategyFactory|+ create(int)\l}" style=filled fillcolor="#f0f0f0"];
+    PlayerFactory [label="{PlayerFactory|+ create(string, Colour)\l}" style=filled fillcolor="#f0f0f0"];
+
+    // ===== VALUE TYPES =====
+    Colour [label="{«enum» Colour|White\nBlack}"];
+    Position [label="{Position|+ row : int\l+ col : int\l}"];
+    Move [label="{Move|+ from : Position\l+ to : Position\l+ promotion : char\l}"];
+
+    // ===== RANK CONSTRAINTS =====
+    // Tier 1
+    {rank=same; ChessProgram}
+    // Tier 2
+    {rank=same; Game}
+    // Tier 3
+    {rank=same; Board; Player}
+    // Tier 4
+    {rank=same; Subject; Observer; HumanPlayer; ComputerPlayer; Piece}
+    // Tier 5
+    {rank=same; TextDisplay; GraphicsDisplay; Strategy; King; Queen; Rook}
+    // Tier 6
+    {rank=same; Xwindow; Level1Strategy; Level2Strategy; Level3Strategy; Level4Strategy; Bishop; Knight; Pawn}
+    // Tier 7
+    {rank=same; PieceFactory; StrategyFactory; PlayerFactory; Colour; Position; Move}
+
+    // ===== INHERITANCE =====
+    edge [arrowhead=empty, style=solid, color=black];
+    Board -> Subject;
+    TextDisplay -> Observer;
+    GraphicsDisplay -> Observer;
+    HumanPlayer -> Player;
+    ComputerPlayer -> Player;
+    King -> Piece;
+    Queen -> Piece;
+    Rook -> Piece;
+    Bishop -> Piece;
+    Knight -> Piece;
+    Pawn -> Piece;
+    Level1Strategy -> Strategy;
+    Level2Strategy -> Strategy;
+    Level3Strategy -> Strategy;
+    Level4Strategy -> Strategy;
+
+    // ===== COMPOSITION =====
+    edge [dir=both, arrowtail=diamond, arrowhead=normal, style=solid, color=black];
+    ChessProgram -> Board [label="1"];
+    ChessProgram -> Game [label="1"];
+    Board -> Piece [label="0..*"];
+    Game -> Player [label="2"];
+    ComputerPlayer -> Strategy [label="1"];
+    GraphicsDisplay -> Xwindow [label="1"];
+
+    // ===== ASSOCIATION =====
+    edge [dir=forward, arrowtail=none, arrowhead=normal, style=solid, color=black];
+    Game -> Board [label="uses"];
+    TextDisplay -> Board [label="observes", constraint=false];
+    GraphicsDisplay -> Board [label="observes", constraint=false];
+
+    // ===== DEPENDENCY =====
+    edge [dir=forward, arrowtail=none, arrowhead=normal, style=dashed, color="gray40"];
+    PieceFactory -> Piece [label="«creates»"];
+    StrategyFactory -> Strategy [label="«creates»"];
+    PlayerFactory -> Player [label="«creates»"];
+}
