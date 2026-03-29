@@ -1,114 +1,249 @@
 digraph UML {
     rankdir=TB;
+    splines=ortho;
+    forcelabels=true;
     fontname="Helvetica";
-    node [shape=record, fontname="Helvetica", fontsize=9];
+    node [shape=none, fontname="Helvetica", fontsize=9, margin=0];
     edge [fontname="Helvetica", fontsize=8];
     nodesep=0.3;
-    ranksep=0.5;
+    ranksep=1.2;
+    size="17,22!";
+    margin=0.3;
 
-    // Force a narrower canvas
-    size="8.5,11!";
-    margin=0.25;
+    // ===== CONTROLLER =====
+    ChessProgram [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>ChessProgram</B></TD></TR>
+<TR><TD ALIGN="LEFT">- game : Game<BR ALIGN="LEFT"/>- whiteType : PlayerType<BR ALIGN="LEFT"/>- blackType : PlayerType<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ run() : void<BR ALIGN="LEFT"/>- handleMove(istringstream&amp;) : void<BR ALIGN="LEFT"/>- setupMode() : bool<BR ALIGN="LEFT"/>- validateSetup() : bool<BR ALIGN="LEFT"/>- <U>parsePlayerType(string) : PlayerType</U><BR ALIGN="LEFT"/>- <U>parsePromotion(char) : PieceType</U><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== CONTROLLER LAYER =====
-    ChessProgram [label="{ChessProgram|+ run() : void\l+ setupMode() : void\l+ printScores() : void\l}"];
+    // ===== GAME =====
+    Game [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Game</B></TD></TR>
+<TR><TD ALIGN="LEFT">- board : Board<BR ALIGN="LEFT"/>- display : TextDisplay<BR ALIGN="LEFT"/>- whitePlayer : PlayerType<BR ALIGN="LEFT"/>- blackPlayer : PlayerType<BR ALIGN="LEFT"/>- turn : Color<BR ALIGN="LEFT"/>- whiteScore : double<BR ALIGN="LEFT"/>- blackScore : double<BR ALIGN="LEFT"/>- gameInProgress : bool<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ startGame(PlayerType, PlayerType, bool) : void<BR ALIGN="LEFT"/>+ makeMove(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ resign(Color) : void<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ isOver() : bool<BR ALIGN="LEFT"/>+ currentTurn() : Color<BR ALIGN="LEFT"/>+ currentPlayerType() : PlayerType<BR ALIGN="LEFT"/>+ setTurn(Color) : void<BR ALIGN="LEFT"/>+ getBoard() : Board&amp;<BR ALIGN="LEFT"/>+ printScore() : void<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== GAME + BOARD LAYER =====
-    Game [label="{Game|+ play() : void\l+ resign() : void\l+ isOver() : bool\l+ getResult() : string\l}"];
-    Board [label="{Board|+ init() : void\l+ makeMove(Move) : void\l+ undoMove() : void\l+ allLegalMoves(Colour) : vector\<Move\>\l+ isInCheck(Colour) : bool\l+ isCheckmate(Colour) : bool\l+ isStalemate(Colour) : bool\l+ placePiece(Position, char) : void\l+ removePiece(Position) : void\l+ getPiece(Position) : Piece*\l}"];
+    // ===== BOARD =====
+    Board [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Board</B></TD></TR>
+<TR><TD ALIGN="LEFT">- grid : shared_ptr&lt;ChessPiece&gt; [8][8]<BR ALIGN="LEFT"/>- history : vector&lt;Move&gt;<BR ALIGN="LEFT"/>- notify_enabled : bool<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ getPiece(Position) : ChessPiece*<BR ALIGN="LEFT"/>+ movePiece(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ placePiece(Position, char) : void<BR ALIGN="LEFT"/>+ removePiece(Position) : void<BR ALIGN="LEFT"/>+ reset() : void<BR ALIGN="LEFT"/>+ setNotify(bool) : void<BR ALIGN="LEFT"/>+ allLegalMoves(Color) : vector&lt;Move&gt;<BR ALIGN="LEFT"/>+ isInCheck(Color) : bool<BR ALIGN="LEFT"/>+ isCheckmate(Color) : bool<BR ALIGN="LEFT"/>+ isStalemate(Color) : bool<BR ALIGN="LEFT"/>+ givesCheck(Position, Position) : bool<BR ALIGN="LEFT"/>+ isUnderAttack(Position, Color) : bool<BR ALIGN="LEFT"/>+ getLastMove() : const Move*<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== ABSTRACT BASES =====
-    Subject [label="{«abstract» Subject|+ attach(Observer*) : void\l+ detach(Observer*) : void\l+ notifyObservers() : void\l}"];
-    Observer [label="{«abstract» Observer|+ notify(Position, Piece*) : void\l}"];
-    Player [label="{«abstract» Player|# colour : Colour\l|+ getMove(Board\&) : Move\l}"];
-    Piece [label="{«abstract» Piece|# colour : Colour\l# pos : Position\l# moved : bool\l|+ pseudoLegalMoves(Board\&) : vector\<Move\>\l+ symbol() : char\l+ clone() : unique_ptr\<Piece\>\l}"];
-    Strategy [label="{«abstract» Strategy|+ pickMove(Board\&, Colour) : Move\l}"];
+    // ===== OBSERVER PATTERN =====
+    Subject [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Subject</B></TD></TR>
+<TR><TD ALIGN="LEFT">- observers : vector&lt;Observer*&gt;<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ attach(Observer*) : void<BR ALIGN="LEFT"/>+ detach(Observer*) : void<BR ALIGN="LEFT"/>+ notifyObservers() : void<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== CONCRETE OBSERVERS =====
-    TextDisplay [label="{TextDisplay|+ notify(Position, Piece*) : void\l+ render() : void\l}"];
-    GraphicsDisplay [label="{GraphicsDisplay|+ notify(Position, Piece*) : void\l+ render() : void\l}"];
-    Xwindow [label="{Xwindow|+ drawRect(x,y,w,h,colour) : void\l+ drawString(x,y,msg) : void\l}"];
+    Observer [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><I><B>Observer</B></I></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ update() : void</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== CONCRETE PLAYERS =====
-    HumanPlayer [label="{HumanPlayer|+ getMove(Board\&) : Move\l}"];
-    ComputerPlayer [label="{ComputerPlayer|+ getMove(Board\&) : Move\l}"];
+    TextDisplay [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>TextDisplay</B></TD></TR>
+<TR><TD ALIGN="LEFT">- board : Board&amp;<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ update() : void</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== CONCRETE PIECES =====
-    King [label="{King|+ pseudoLegalMoves()\l+ symbol()\l}"];
-    Queen [label="{Queen|+ pseudoLegalMoves()\l+ symbol()\l}"];
-    Rook [label="{Rook|+ pseudoLegalMoves()\l+ symbol()\l}"];
-    Bishop [label="{Bishop|+ pseudoLegalMoves()\l+ symbol()\l}"];
-    Knight [label="{Knight|+ pseudoLegalMoves()\l+ symbol()\l}"];
-    Pawn [label="{Pawn|+ pseudoLegalMoves()\l+ symbol()\l}"];
+    GraphicDisplay [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>GraphicDisplay</B></TD></TR>
+<TR><TD ALIGN="LEFT">- impl : unique_ptr&lt;Impl&gt;<BR ALIGN="LEFT"/>- board : Board&amp;<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ update() : void</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== CONCRETE STRATEGIES =====
-    Level1Strategy [label="{Level1Strategy|+ pickMove()\l}"];
-    Level2Strategy [label="{Level2Strategy|+ pickMove()\l}"];
-    Level3Strategy [label="{Level3Strategy|+ pickMove()\l}"];
-    Level4Strategy [label="{Level4Strategy|+ pickMove()\l}"];
+    XWindow [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>XWindow</B></TD></TR>
+<TR><TD ALIGN="LEFT">- width : int<BR ALIGN="LEFT"/>- height : int<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ fillRectangle(x, y, w, h, color) : void<BR ALIGN="LEFT"/>+ drawString(x, y, string, color) : void<BR ALIGN="LEFT"/>+ flush() : void<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== FACTORIES =====
-    PieceFactory [label="{PieceFactory|+ create(char, Position)\l}" style=filled fillcolor="#f0f0f0"];
-    StrategyFactory [label="{StrategyFactory|+ create(int)\l}" style=filled fillcolor="#f0f0f0"];
-    PlayerFactory [label="{PlayerFactory|+ create(string, Colour)\l}" style=filled fillcolor="#f0f0f0"];
+    // ===== PIECE HIERARCHY =====
+    ChessPiece [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><I><B>ChessPiece</B></I></TD></TR>
+<TR><TD ALIGN="LEFT"># color : Color<BR ALIGN="LEFT"/># pos : Position<BR ALIGN="LEFT"/># piece_type : PieceType<BR ALIGN="LEFT"/># has_moved : bool<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ getColor() : Color<BR ALIGN="LEFT"/>+ getPieceType() : PieceType<BR ALIGN="LEFT"/>+ getPosition() : Position<BR ALIGN="LEFT"/>+ hasMoved() : bool<BR ALIGN="LEFT"/>+ setMoved(bool) : void<BR ALIGN="LEFT"/>+ setPosition(Position) : void<BR ALIGN="LEFT"/><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    King [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>King</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Queen [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Queen</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Rook [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Rook</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Bishop [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Bishop</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Knight [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Knight</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Pawn [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Pawn</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    // ===== STRATEGY HIERARCHY =====
+    Strategy [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><I><B>Strategy</B></I></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ pickMove(Board&amp;, Color) : Move</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Level1Strategy [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Level1Strategy</B></TD></TR>
+<TR><TD ALIGN="LEFT">- rng : mt19937<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ pickMove(Board&amp;, Color) : Move</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Level2Strategy [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Level2Strategy</B></TD></TR>
+<TR><TD ALIGN="LEFT">- rng : mt19937<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ pickMove(Board&amp;, Color) : Move</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Level3Strategy [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Level3Strategy</B></TD></TR>
+<TR><TD ALIGN="LEFT">- rng : mt19937<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ pickMove(Board&amp;, Color) : Move</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Level4Strategy [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Level4Strategy</B></TD></TR>
+<TR><TD></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ pickMove(Board&amp;, Color) : Move</I><BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
     // ===== VALUE TYPES =====
-    Colour [label="{«enum» Colour|White\nBlack}"];
-    Position [label="{Position|+ row : int\l+ col : int\l}"];
-    Move [label="{Move|+ from : Position\l+ to : Position\l+ promotion : char\l}"];
+    Color [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD>«enumeration»<BR/><B>Color</B></TD></TR>
+<TR><TD ALIGN="LEFT">White<BR ALIGN="LEFT"/>Black<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
 
-    // ===== RANK CONSTRAINTS =====
-    // Tier 1
+    PieceType [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD>«enumeration»<BR/><B>PieceType</B></TD></TR>
+<TR><TD ALIGN="LEFT">Pawn<BR ALIGN="LEFT"/>Rook<BR ALIGN="LEFT"/>Knight<BR ALIGN="LEFT"/>Bishop<BR ALIGN="LEFT"/>Queen<BR ALIGN="LEFT"/>King<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    PlayerType [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD>«enumeration»<BR/><B>PlayerType</B></TD></TR>
+<TR><TD ALIGN="LEFT">Human<BR ALIGN="LEFT"/>Computer1<BR ALIGN="LEFT"/>Computer2<BR ALIGN="LEFT"/>Computer3<BR ALIGN="LEFT"/>Computer4<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Position [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Position</B></TD></TR>
+<TR><TD ALIGN="LEFT">- x : int<BR ALIGN="LEFT"/>- y : int<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ <U>fromNotation(string) : Position</U><BR ALIGN="LEFT"/>+ toNotation() : string<BR ALIGN="LEFT"/>+ getX() : int<BR ALIGN="LEFT"/>+ getY() : int<BR ALIGN="LEFT"/>+ operator==(Position) : bool<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    Move [label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD><B>Move</B></TD></TR>
+<TR><TD ALIGN="LEFT">+ from : Position<BR ALIGN="LEFT"/>+ to : Position<BR ALIGN="LEFT"/>+ piece_moved : ChessPiece*<BR ALIGN="LEFT"/>+ captured : shared_ptr&lt;ChessPiece&gt;<BR ALIGN="LEFT"/>+ captured_at : Position<BR ALIGN="LEFT"/>+ prev_had_moved : bool<BR ALIGN="LEFT"/>+ is_en_passant : bool<BR ALIGN="LEFT"/>+ is_castling : bool<BR ALIGN="LEFT"/>+ rook_moved : ChessPiece*<BR ALIGN="LEFT"/>+ rook_from : Position<BR ALIGN="LEFT"/>+ rook_to : Position<BR ALIGN="LEFT"/>+ rook_prev_had_moved : bool<BR ALIGN="LEFT"/>+ promoted_from : shared_ptr&lt;ChessPiece&gt;<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ Move(Position, Position, ChessPiece*,<BR ALIGN="LEFT"/>&#160;&#160;shared_ptr&lt;ChessPiece&gt;, Position, bool)<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    // ===== FACTORY FUNCTIONS =====
+    makePiece [style=filled, fillcolor="#f0f0f0", label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD>«function»<BR/><B>makePiece</B></TD></TR>
+<TR><TD ALIGN="LEFT">(PieceType, Color, Position)<BR ALIGN="LEFT"/>: unique_ptr&lt;ChessPiece&gt;<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    makeStrategy [style=filled, fillcolor="#f0f0f0", label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR><TD>«function»<BR/><B>makeStrategy</B></TD></TR>
+<TR><TD ALIGN="LEFT">(PlayerType)<BR ALIGN="LEFT"/>: unique_ptr&lt;Strategy&gt;<BR ALIGN="LEFT"/></TD></TR>
+</TABLE>>];
+
+    // ===== LAYOUT GUIDANCE =====
     {rank=same; ChessProgram}
-    // Tier 2
     {rank=same; Game}
-    // Tier 3
-    {rank=same; Board; Player}
-    // Tier 4
-    {rank=same; Subject; Observer; HumanPlayer; ComputerPlayer; Piece}
-    // Tier 5
-    {rank=same; TextDisplay; GraphicsDisplay; Strategy; King; Queen; Rook}
-    // Tier 6
-    {rank=same; Xwindow; Level1Strategy; Level2Strategy; Level3Strategy; Level4Strategy; Bishop; Knight; Pawn}
-    // Tier 7
-    {rank=same; PieceFactory; StrategyFactory; PlayerFactory; Colour; Position; Move}
+    {rank=same; Board; Strategy}
+    {rank=same; Subject; ChessPiece; TextDisplay; GraphicDisplay}
+    // Split the old 12-node rank into two to reduce horizontal sprawl
+    {rank=same; King; Queen; Rook; Bishop; Knight; Pawn}
+    {rank=same; Observer; XWindow; Level1Strategy; Level2Strategy; Level3Strategy; Level4Strategy}
+    {rank=same; makePiece; makeStrategy; Color; PieceType; PlayerType; Position; Move}
 
-    // ===== INHERITANCE =====
-    edge [arrowhead=empty, style=solid, color=black];
+    // ===== INHERITANCE (open triangle arrowhead) =====
+    edge [arrowhead=empty, style=solid, color=black, dir=forward];
     Board -> Subject;
     TextDisplay -> Observer;
-    GraphicsDisplay -> Observer;
-    HumanPlayer -> Player;
-    ComputerPlayer -> Player;
-    King -> Piece;
-    Queen -> Piece;
-    Rook -> Piece;
-    Bishop -> Piece;
-    Knight -> Piece;
-    Pawn -> Piece;
+    GraphicDisplay -> Observer;
+    King -> ChessPiece;
+    Queen -> ChessPiece;
+    Rook -> ChessPiece;
+    Bishop -> ChessPiece;
+    Knight -> ChessPiece;
+    Pawn -> ChessPiece;
     Level1Strategy -> Strategy;
     Level2Strategy -> Strategy;
     Level3Strategy -> Strategy;
     Level4Strategy -> Strategy;
 
-    // ===== COMPOSITION =====
-    edge [dir=both, arrowtail=diamond, arrowhead=normal, style=solid, color=black];
-    ChessProgram -> Board [label="1"];
-    ChessProgram -> Game [label="1"];
-    Board -> Piece [label="0..*"];
-    Game -> Player [label="2"];
-    ComputerPlayer -> Strategy [label="1"];
-    GraphicsDisplay -> Xwindow [label="1"];
+    // ===== COMPOSITION (filled diamond at owner) =====
+    edge [dir=both, arrowtail=diamond, arrowhead=none, style=solid, color=black];
+    ChessProgram -> Game [xlabel="1"];
+    Game -> Board [xlabel="1"];
+    Game -> TextDisplay [xlabel="1"];
+    Board -> ChessPiece [xlabel="0..*"];
+    GraphicDisplay -> XWindow [xlabel="1"];
 
-    // ===== ASSOCIATION =====
-    edge [dir=forward, arrowtail=none, arrowhead=normal, style=solid, color=black];
-    Game -> Board [label="uses"];
-    TextDisplay -> Board [label="observes", constraint=false];
-    GraphicsDisplay -> Board [label="observes", constraint=false];
+    // ===== ASSOCIATION (reference, non-owning) =====
+    edge [dir=forward, arrowtail=none, arrowhead=open, style=solid, color=black];
+    TextDisplay -> Board [xlabel="observes", constraint=false];
+    GraphicDisplay -> Board [xlabel="observes", constraint=false];
 
-    // ===== DEPENDENCY =====
-    edge [dir=forward, arrowtail=none, arrowhead=normal, style=dashed, color="gray40"];
-    PieceFactory -> Piece [label="«creates»"];
-    StrategyFactory -> Strategy [label="«creates»"];
-    PlayerFactory -> Player [label="«creates»"];
+    // ===== DEPENDENCY (dashed arrow) =====
+    edge [dir=forward, arrowhead=open, style=dashed, color="gray40"];
+    makePiece -> ChessPiece [xlabel="«creates»", constraint=false];
+    makeStrategy -> Strategy [xlabel="«creates»", constraint=false];
+    ChessProgram -> Strategy [xlabel="«uses»"];
 }

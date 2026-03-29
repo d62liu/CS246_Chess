@@ -1,0 +1,35 @@
+setup
++ K a1
++ k h3
++ P a7
+= white
+done
+game human human
+move a7 a8 Q
+resign
+setup
++ K a1
++ k h3
++ P a7
+= white
+done
+game human human
+move a7 a8 R
+resign
+setup
++ K a1
++ k h3
++ P a7
+= white
+done
+game human human
+move a7 a8 B
+resign
+setup
++ K a1
++ k h3
++ P a7
+= white
+done
+game human human
+move a7 a8 N
