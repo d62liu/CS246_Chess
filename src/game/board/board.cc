@@ -5,25 +5,12 @@ import pieces;
 
 
 Board::Board() {
-    for (int x = 0; x < 8; ++x)
-        for (int y = 0; y < 8; ++y)
-            grid[x][y] = nullptr;
     initBoard();
-}
-
-Board::~Board() {
-    for (int x = 0; x < 8; ++x)
-        for (int y = 0; y < 8; ++y)
-            delete grid[x][y];
-    for (auto& m : history) {
-        delete m.captured;
-        delete m.promoted_from;
-    }
 }
 
 void Board::initBoard() {
     auto place = [&](PieceType type, Color color, int x, int y) {
-        grid[x][y] = makePiece(type, color, Position{x, y}).release();
+        grid[x][y] = makePiece(type, color, Position{x, y});
     };
 
     place(PieceType::Rook, White, 0, 0);
@@ -49,7 +36,7 @@ void Board::initBoard() {
 
 
 ChessPiece* Board::getPiece(Position pos) const {
-    return grid[pos.getX()][pos.getY()];
+    return grid[pos.getX()][pos.getY()].get();
 }
 
 const Move* Board::getLastMove() const {
@@ -84,7 +71,7 @@ bool Board::isPathClear(Position from, Position to) const {
 bool Board::isUnderAttack(Position pos, Color byColor) const {
     for (int x = 0; x < 8; ++x) {
         for (int y = 0; y < 8; ++y) {
-            ChessPiece* piece = grid[x][y];
+            ChessPiece* piece = grid[x][y].get();
             if (!piece || piece->getColor() != byColor) continue;
             for (auto& m : getCandidateMoves(piece))
                 if (m == pos) return true;
@@ -110,7 +97,7 @@ std::vector<Position> Board::getCandidateMoves(ChessPiece* piece) const {
     for (auto& to : raw) {
         if (to.getX() < 0 || to.getX() >= 8 || to.getY() < 0 || to.getY() >= 8) continue;
 
-        ChessPiece* target = grid[to.getX()][to.getY()];
+        ChessPiece* target = grid[to.getX()][to.getY()].get();
 
         if (target && target->getColor() == color) continue;
 
@@ -145,45 +132,48 @@ std::vector<Position> Board::getCandidateMoves(ChessPiece* piece) const {
     return valid;
 }
 
-bool Board::wouldLeaveInCheck(Position from, Position to, Color color) const {
-    ChessPiece* moved    = grid[from.getX()][from.getY()];
-    ChessPiece* captured = grid[to.getX()][to.getY()];
+bool Board::wouldLeaveInCheck(Position from, Position to, Color color) {
+    ChessPiece* movedRaw = grid[from.getX()][from.getY()].get();
     Position capturedAt  = to;
     bool isEP = false;
 
-    if (moved->getPieceType() == PieceType::Pawn &&
-        from.getX() != to.getX() && !captured) {
+    // Save what's currently at 'to' before we displace it
+    auto savedTo = std::move(grid[to.getX()][to.getY()]);
+    std::shared_ptr<ChessPiece> savedEP;
+
+    if (movedRaw->getPieceType() == PieceType::Pawn &&
+        from.getX() != to.getX() && !savedTo) {
         isEP = true;
         capturedAt = Position{to.getX(), from.getY()};
-        captured = grid[capturedAt.getX()][capturedAt.getY()];
-        grid[capturedAt.getX()][capturedAt.getY()] = nullptr;
+        savedEP = std::move(grid[capturedAt.getX()][capturedAt.getY()]);
     }
 
-    grid[to.getX()][to.getY()]   = moved;
-    grid[from.getX()][from.getY()] = nullptr;
-    moved->setPosition(to);
+    // Temporarily move piece from 'from' to 'to'
+    grid[to.getX()][to.getY()] = std::move(grid[from.getX()][from.getY()]);
+    movedRaw->setPosition(to);
 
     bool inCheck = isInCheck(color);
 
-    moved->setPosition(from);
-    grid[from.getX()][from.getY()] = moved;
-    grid[to.getX()][to.getY()]     = isEP ? nullptr : captured;
-    if (isEP) grid[capturedAt.getX()][capturedAt.getY()] = captured;
+    // Restore everything
+    movedRaw->setPosition(from);
+    grid[from.getX()][from.getY()] = std::move(grid[to.getX()][to.getY()]);
+    grid[to.getX()][to.getY()]     = std::move(savedTo);
+    if (isEP) grid[capturedAt.getX()][capturedAt.getY()] = std::move(savedEP);
 
     return inCheck;
 }
 
-std::vector<Move> Board::getLegalMoves(ChessPiece* piece) const {
+std::vector<Move> Board::getLegalMoves(ChessPiece* piece) {
     std::vector<Move> legal;
-    Color color   = piece->getColor();
-    Color enemy   = (color == White) ? Black : White;
+    Color color = piece->getColor();
+    Color enemy = (color == White) ? Black : White;
     Position from = piece->getPosition();
 
     for (auto& to : getCandidateMoves(piece)) {
         if (wouldLeaveInCheck(from, to, color)) continue;
 
-        ChessPiece* captured = grid[to.getX()][to.getY()];
-        Position capturedAt  = to;
+        auto captured = grid[to.getX()][to.getY()];  // shared_ptr (non-owning ref while in grid)
+        Position capturedAt = to;
         bool isEP = false;
 
         if (piece->getPieceType() == PieceType::Pawn &&
@@ -202,7 +192,7 @@ std::vector<Move> Board::getLegalMoves(ChessPiece* piece) const {
         !piece->hasMoved() && !isInCheck(color)) {
         int y = (color == White) ? 0 : 7;
 
-        ChessPiece* kRook = grid[7][y];
+        ChessPiece* kRook = grid[7][y].get();
         if (kRook && kRook->getPieceType() == PieceType::Rook && !kRook->hasMoved() &&
             !grid[5][y] && !grid[6][y] &&
             !isUnderAttack(Position{5, y}, enemy) &&
@@ -216,7 +206,7 @@ std::vector<Move> Board::getLegalMoves(ChessPiece* piece) const {
             legal.push_back(m);
         }
 
-        ChessPiece* qRook = grid[0][y];
+        ChessPiece* qRook = grid[0][y].get();
         if (qRook && qRook->getPieceType() == PieceType::Rook && !qRook->hasMoved() &&
             !grid[1][y] && !grid[2][y] && !grid[3][y] &&
             !isUnderAttack(Position{3, y}, enemy) &&
@@ -234,11 +224,11 @@ std::vector<Move> Board::getLegalMoves(ChessPiece* piece) const {
     return legal;
 }
 
-std::vector<Move> Board::allLegalMoves(Color color) const {
+std::vector<Move> Board::allLegalMoves(Color color) {
     std::vector<Move> all;
     for (int x = 0; x < 8; ++x)
         for (int y = 0; y < 8; ++y) {
-            ChessPiece* piece = grid[x][y];
+            ChessPiece* piece = grid[x][y].get();
             if (!piece || piece->getColor() != color) continue;
             auto moves = getLegalMoves(piece);
             all.insert(all.end(), moves.begin(), moves.end());
@@ -246,16 +236,16 @@ std::vector<Move> Board::allLegalMoves(Color color) const {
     return all;
 }
 
-bool Board::isCheckmate(Color color) const {
+bool Board::isCheckmate(Color color) {
     return isInCheck(color) && allLegalMoves(color).empty();
 }
 
-bool Board::isStalemate(Color color) const {
+bool Board::isStalemate(Color color) {
     return !isInCheck(color) && allLegalMoves(color).empty();
 }
 
 bool Board::movePiece(Position from, Position to, PieceType promotion) {
-    ChessPiece* piece = grid[from.getX()][from.getY()];
+    ChessPiece* piece = grid[from.getX()][from.getY()].get();
     if (!piece) return false;
 
     auto legal = getLegalMoves(piece);
@@ -266,83 +256,131 @@ bool Board::movePiece(Position from, Position to, PieceType promotion) {
 
     Move move = *match;
 
+    // Remove captured piece from grid (move still holds shared_ptr to it)
     if (move.captured)
         grid[move.captured_at.getX()][move.captured_at.getY()] = nullptr;
 
     // Move the piece
-    grid[to.getX()][to.getY()]     = piece;
-    grid[from.getX()][from.getY()] = nullptr;
+    grid[to.getX()][to.getY()]     = std::move(grid[from.getX()][from.getY()]);
     piece->setPosition(to);
     piece->setMoved(true);
 
     // Castling: also move the rook
     if (move.is_castling) {
-        ChessPiece* rook = move.rook_moved;
-        grid[move.rook_to.getX()][move.rook_to.getY()]     = rook;
-        grid[move.rook_from.getX()][move.rook_from.getY()] = nullptr;
-        rook->setPosition(move.rook_to);
-        rook->setMoved(true);
+        grid[move.rook_to.getX()][move.rook_to.getY()] =
+            std::move(grid[move.rook_from.getX()][move.rook_from.getY()]);
+        move.rook_moved->setPosition(move.rook_to);
+        move.rook_moved->setMoved(true);
     }
 
+    // Pawn promotion
     if (piece->getPieceType() == PieceType::Pawn) {
         int backRank = (piece->getColor() == White) ? 7 : 0;
         if (to.getY() == backRank) {
-            ChessPiece* promoted = makePiece(promotion, piece->getColor(), to).release();
+            auto promoted = makePiece(promotion, piece->getColor(), to);
             promoted->setMoved(true);
-            move.promoted_from = piece; // pawn kept alive in history for undo
-            grid[to.getX()][to.getY()] = promoted;
+            move.promoted_from = std::move(grid[to.getX()][to.getY()]); // save pawn
+            grid[to.getX()][to.getY()] = std::move(promoted);
         }
     }
 
-    history.push_back(move);
+    history.push_back(std::move(move));
+    if (notify_enabled) notifyObservers();
     return true;
+}
+
+void Board::setNotify(bool enabled) { notify_enabled = enabled; }
+
+bool Board::givesCheck(Position from, Position to) {
+    ChessPiece* movedRaw = grid[from.getX()][from.getY()].get();
+    if (!movedRaw) return false;
+    Color enemy = (movedRaw->getColor() == White) ? Black : White;
+
+    Position capturedAt = to;
+    bool isEP = false;
+
+    auto savedTo = std::move(grid[to.getX()][to.getY()]);
+    std::shared_ptr<ChessPiece> savedEP;
+
+    if (movedRaw->getPieceType() == PieceType::Pawn &&
+        from.getX() != to.getX() && !savedTo) {
+        isEP = true;
+        capturedAt = Position{to.getX(), from.getY()};
+        savedEP = std::move(grid[capturedAt.getX()][capturedAt.getY()]);
+    }
+
+    grid[to.getX()][to.getY()] = std::move(grid[from.getX()][from.getY()]);
+    movedRaw->setPosition(to);
+
+    bool check = isInCheck(enemy);
+
+    movedRaw->setPosition(from);
+    grid[from.getX()][from.getY()] = std::move(grid[to.getX()][to.getY()]);
+    grid[to.getX()][to.getY()]     = std::move(savedTo);
+    if (isEP) grid[capturedAt.getX()][capturedAt.getY()] = std::move(savedEP);
+
+    return check;
+}
+
+void Board::placePiece(Position pos, char symbol) {
+    Color color = std::isupper(symbol) ? White : Black;
+    PieceType type;
+    switch (std::toupper(symbol)) {
+        case 'K': type = PieceType::King;   break;
+        case 'Q': type = PieceType::Queen;  break;
+        case 'R': type = PieceType::Rook;   break;
+        case 'B': type = PieceType::Bishop; break;
+        case 'N': type = PieceType::Knight; break;
+        case 'P': type = PieceType::Pawn;   break;
+        default: return; // unknown symbol
+    }
+    int x = pos.getX(), y = pos.getY();
+    grid[x][y] = makePiece(type, color, pos);
+    notifyObservers();
+}
+
+void Board::removePiece(Position pos) {
+    int x = pos.getX(), y = pos.getY();
+    if (!grid[x][y]) return;
+    grid[x][y] = nullptr;
+    notifyObservers();
+}
+
+void Board::reset() {
+    history.clear();
+    for (int x = 0; x < 8; ++x)
+        for (int y = 0; y < 8; ++y)
+            grid[x][y] = nullptr;
+    initBoard();
 }
 
 void Board::undoMove() {
     if (history.empty()) return;
-    Move move = history.back();
+    Move move = std::move(history.back());
     history.pop_back();
 
-    ChessPiece* piece = move.piece_moved;
+    ChessPiece* piece;
 
     if (move.promoted_from) {
-        delete grid[move.to.getX()][move.to.getY()];
-        piece = move.promoted_from;
+        // Delete promoted piece, restore original pawn
+        grid[move.to.getX()][move.to.getY()] = nullptr;
+        piece = move.promoted_from.get();
+        grid[move.from.getX()][move.from.getY()] = std::move(move.promoted_from);
+    } else {
+        piece = grid[move.to.getX()][move.to.getY()].get();
+        grid[move.from.getX()][move.from.getY()] = std::move(grid[move.to.getX()][move.to.getY()]);
     }
 
-    grid[move.from.getX()][move.from.getY()] = piece;
-    grid[move.to.getX()][move.to.getY()]  = nullptr;
     piece->setPosition(move.from);
     piece->setMoved(move.prev_had_moved);
 
     if (move.captured)
-        grid[move.captured_at.getX()][move.captured_at.getY()] = move.captured;
+        grid[move.captured_at.getX()][move.captured_at.getY()] = std::move(move.captured);
 
     if (move.is_castling) {
-        ChessPiece* rook = move.rook_moved;
-        grid[move.rook_from.getX()][move.rook_from.getY()] = rook;
-        grid[move.rook_to.getX()][move.rook_to.getY()] = nullptr;
-        rook->setPosition(move.rook_from);
-        rook->setMoved(move.rook_prev_had_moved);
+        grid[move.rook_from.getX()][move.rook_from.getY()] =
+            std::move(grid[move.rook_to.getX()][move.rook_to.getY()]);
+        move.rook_moved->setPosition(move.rook_from);
+        move.rook_moved->setMoved(move.rook_prev_had_moved);
     }
 }
-
-&ostream operator<<(&ostream os, const Board& board) {
-    for (int y = 7; y >= 0; --y) {
-        os << (y + 1) << " ";
-        for (int x = 0; x < 8; ++x) {
-            ChessPiece* piece = board.grid[x][y];
-            if (piece) {
-                char sym = piece->symbol();
-                os << (piece->getColor() == White ? sym : std::tolower(sym)) << " ";
-            } else {
-                os << ". ";
-            }
-        }
-        os << "\n";
-    }
-    os << "  a b c d e f g h\n";
-    return os;
-}
-
-

@@ -19,7 +19,6 @@ std::vector<Position> Pawn::get_valid_moves() const {
     int x = pos.getX(), y = pos.getY();
     int dir = (color == White) ? 1 : -1;
 
-    // Forward one square (board will reject if blocked)
     moves.push_back(Position{x, y + dir});
     if (!has_moved) moves.push_back(Position{x, y + 2 * dir});
     moves.push_back(Position{x - 1, y + dir});

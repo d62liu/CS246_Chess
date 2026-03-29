@@ -4,9 +4,9 @@ import std;
 
 export enum Color { White, Black };
 export enum class PieceType { Pawn, Rook, Knight, Bishop, Queen, King };
+export enum class PlayerType { Human, Computer1, Computer2, Computer3, Computer4 };
 
-export class Position {
-public:
+export struct Position {
     Position(int x, int y);
     static Position fromNotation(const std::string& notation); // "e2" -> Position(4, 1)
     std::string toNotation() const;                            // Position(4, 1) -> "e2"
