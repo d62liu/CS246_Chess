@@ -13,7 +13,7 @@ void Game::startGame(PlayerType white, PlayerType black, bool resetBoard) {
     if (resetBoard) board.reset(); 
     whitePlayer = white;
     blackPlayer = black;
-    turn = White;
+    if (resetBoard) turn = White;
     gameInProgress = true;
     board.notifyObservers();
 }

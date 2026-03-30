@@ -106,7 +106,6 @@ std::vector<Position> Board::getCandidateMoves(ChessPiece* piece) const {
         if (type == PieceType::Pawn) {
             bool isDiag = (from.getX() != to.getX());
             if (isDiag) {
-                // Diagonal: only valid if enemy is there OR en passant is available
                 bool isEP = false;
                 if (!history.empty()) {
                     const Move& last = history.back();
@@ -137,7 +136,6 @@ bool Board::wouldLeaveInCheck(Position from, Position to, Color color) {
     Position capturedAt  = to;
     bool isEP = false;
 
-    // Save what's currently at 'to' before we displace it
     auto savedTo = std::move(grid[to.getX()][to.getY()]);
     std::shared_ptr<ChessPiece> savedEP;
 
@@ -148,13 +146,11 @@ bool Board::wouldLeaveInCheck(Position from, Position to, Color color) {
         savedEP = std::move(grid[capturedAt.getX()][capturedAt.getY()]);
     }
 
-    // Temporarily move piece from 'from' to 'to'
     grid[to.getX()][to.getY()] = std::move(grid[from.getX()][from.getY()]);
     movedRaw->setPosition(to);
 
     bool inCheck = isInCheck(color);
 
-    // Restore everything
     movedRaw->setPosition(from);
     grid[from.getX()][from.getY()] = std::move(grid[to.getX()][to.getY()]);
     grid[to.getX()][to.getY()]     = std::move(savedTo);
@@ -172,7 +168,7 @@ std::vector<Move> Board::getLegalMoves(ChessPiece* piece) {
     for (auto& to : getCandidateMoves(piece)) {
         if (wouldLeaveInCheck(from, to, color)) continue;
 
-        auto captured = grid[to.getX()][to.getY()];  // shared_ptr (non-owning ref while in grid)
+        auto captured = grid[to.getX()][to.getY()]; 
         Position capturedAt = to;
         bool isEP = false;
 
@@ -256,16 +252,13 @@ bool Board::movePiece(Position from, Position to, PieceType promotion) {
 
     Move move = *match;
 
-    // Remove captured piece from grid (move still holds shared_ptr to it)
     if (move.captured)
         grid[move.captured_at.getX()][move.captured_at.getY()] = nullptr;
 
-    // Move the piece
     grid[to.getX()][to.getY()]     = std::move(grid[from.getX()][from.getY()]);
     piece->setPosition(to);
     piece->setMoved(true);
 
-    // Castling: also move the rook
     if (move.is_castling) {
         grid[move.rook_to.getX()][move.rook_to.getY()] =
             std::move(grid[move.rook_from.getX()][move.rook_from.getY()]);
@@ -273,13 +266,12 @@ bool Board::movePiece(Position from, Position to, PieceType promotion) {
         move.rook_moved->setMoved(true);
     }
 
-    // Pawn promotion
     if (piece->getPieceType() == PieceType::Pawn) {
         int backRank = (piece->getColor() == White) ? 7 : 0;
         if (to.getY() == backRank) {
             auto promoted = makePiece(promotion, piece->getColor(), to);
             promoted->setMoved(true);
-            move.promoted_from = std::move(grid[to.getX()][to.getY()]); // save pawn
+            move.promoted_from = std::move(grid[to.getX()][to.getY()]);
             grid[to.getX()][to.getY()] = std::move(promoted);
         }
     }
@@ -332,18 +324,18 @@ void Board::placePiece(Position pos, char symbol) {
         case 'B': type = PieceType::Bishop; break;
         case 'N': type = PieceType::Knight; break;
         case 'P': type = PieceType::Pawn;   break;
-        default: return; // unknown symbol
+        default: return;
     }
     int x = pos.getX(), y = pos.getY();
     grid[x][y] = makePiece(type, color, pos);
-    notifyObservers();
+    if (notify_enabled) notifyObservers();
 }
 
 void Board::removePiece(Position pos) {
     int x = pos.getX(), y = pos.getY();
     if (!grid[x][y]) return;
     grid[x][y] = nullptr;
-    notifyObservers();
+    if (notify_enabled) notifyObservers();
 }
 
 void Board::reset() {
@@ -362,7 +354,6 @@ void Board::undoMove() {
     ChessPiece* piece;
 
     if (move.promoted_from) {
-        // Delete promoted piece, restore original pawn
         grid[move.to.getX()][move.to.getY()] = nullptr;
         piece = move.promoted_from.get();
         grid[move.from.getX()][move.from.getY()] = std::move(move.promoted_from);

@@ -8,7 +8,11 @@ int Position::getY() const { return y; }
 bool Position::operator==(const Position& other) const { return x == other.x && y == other.y; }
 
 Position Position::fromNotation(const std::string& s) {
-    return Position{s[0] - 'a', s[1] - '1'};
+    if (s.size() < 2) return Position{-1, -1};
+    int x = s[0] - 'a';
+    int y = s[1] - '1';
+    if (x < 0 || x >= 8 || y < 0 || y >= 8) return Position{-1, -1};
+    return Position{x, y};
 }
 
 std::string Position::toNotation() const {

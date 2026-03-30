@@ -23,7 +23,7 @@ digraph UML {
 <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
 <TR><TD><B>Game</B></TD></TR>
 <TR><TD ALIGN="LEFT">- board : Board<BR ALIGN="LEFT"/>- display : TextDisplay<BR ALIGN="LEFT"/>- whitePlayer : PlayerType<BR ALIGN="LEFT"/>- blackPlayer : PlayerType<BR ALIGN="LEFT"/>- turn : Color<BR ALIGN="LEFT"/>- whiteScore : double<BR ALIGN="LEFT"/>- blackScore : double<BR ALIGN="LEFT"/>- gameInProgress : bool<BR ALIGN="LEFT"/></TD></TR>
-<TR><TD ALIGN="LEFT">+ startGame(PlayerType, PlayerType, bool) : void<BR ALIGN="LEFT"/>+ makeMove(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ resign(Color) : void<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ isOver() : bool<BR ALIGN="LEFT"/>+ currentTurn() : Color<BR ALIGN="LEFT"/>+ currentPlayerType() : PlayerType<BR ALIGN="LEFT"/>+ setTurn(Color) : void<BR ALIGN="LEFT"/>+ getBoard() : Board&amp;<BR ALIGN="LEFT"/>+ printScore() : void<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ startGame(PlayerType, PlayerType, bool) : void<BR ALIGN="LEFT"/>+ makeMove(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ resign(Color) : void<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ printScore() : void<BR ALIGN="LEFT"/></TD></TR>
 </TABLE>>];
 
     // ===== BOARD =====
@@ -31,7 +31,7 @@ digraph UML {
 <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
 <TR><TD><B>Board</B></TD></TR>
 <TR><TD ALIGN="LEFT">- grid : shared_ptr&lt;ChessPiece&gt; [8][8]<BR ALIGN="LEFT"/>- history : vector&lt;Move&gt;<BR ALIGN="LEFT"/>- notify_enabled : bool<BR ALIGN="LEFT"/></TD></TR>
-<TR><TD ALIGN="LEFT">+ getPiece(Position) : ChessPiece*<BR ALIGN="LEFT"/>+ movePiece(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ placePiece(Position, char) : void<BR ALIGN="LEFT"/>+ removePiece(Position) : void<BR ALIGN="LEFT"/>+ reset() : void<BR ALIGN="LEFT"/>+ setNotify(bool) : void<BR ALIGN="LEFT"/>+ allLegalMoves(Color) : vector&lt;Move&gt;<BR ALIGN="LEFT"/>+ isInCheck(Color) : bool<BR ALIGN="LEFT"/>+ isCheckmate(Color) : bool<BR ALIGN="LEFT"/>+ isStalemate(Color) : bool<BR ALIGN="LEFT"/>+ givesCheck(Position, Position) : bool<BR ALIGN="LEFT"/>+ isUnderAttack(Position, Color) : bool<BR ALIGN="LEFT"/>+ getLastMove() : const Move*<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ movePiece(Position, Position, PieceType) : bool<BR ALIGN="LEFT"/>+ undoMove() : void<BR ALIGN="LEFT"/>+ placePiece(Position, char) : void<BR ALIGN="LEFT"/>+ removePiece(Position) : void<BR ALIGN="LEFT"/>+ reset() : void<BR ALIGN="LEFT"/>+ allLegalMoves(Color) : vector&lt;Move&gt;<BR ALIGN="LEFT"/>+ isInCheck(Color) : bool<BR ALIGN="LEFT"/>+ isCheckmate(Color) : bool<BR ALIGN="LEFT"/>+ isStalemate(Color) : bool<BR ALIGN="LEFT"/>+ givesCheck(Position, Position) : bool<BR ALIGN="LEFT"/>+ isUnderAttack(Position, Color) : bool<BR ALIGN="LEFT"/></TD></TR>
 </TABLE>>];
 
     // ===== OBSERVER PATTERN =====
@@ -75,7 +75,7 @@ digraph UML {
 <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
 <TR><TD><I><B>ChessPiece</B></I></TD></TR>
 <TR><TD ALIGN="LEFT"># color : Color<BR ALIGN="LEFT"/># pos : Position<BR ALIGN="LEFT"/># piece_type : PieceType<BR ALIGN="LEFT"/># has_moved : bool<BR ALIGN="LEFT"/></TD></TR>
-<TR><TD ALIGN="LEFT">+ getColor() : Color<BR ALIGN="LEFT"/>+ getPieceType() : PieceType<BR ALIGN="LEFT"/>+ getPosition() : Position<BR ALIGN="LEFT"/>+ hasMoved() : bool<BR ALIGN="LEFT"/>+ setMoved(bool) : void<BR ALIGN="LEFT"/>+ setPosition(Position) : void<BR ALIGN="LEFT"/><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT"><I>+ get_valid_moves() : vector&lt;Position&gt;</I><BR ALIGN="LEFT"/><I>+ symbol() : char</I><BR ALIGN="LEFT"/></TD></TR>
 </TABLE>>];
 
     King [label=<
@@ -179,14 +179,13 @@ digraph UML {
 <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
 <TR><TD><B>Position</B></TD></TR>
 <TR><TD ALIGN="LEFT">- x : int<BR ALIGN="LEFT"/>- y : int<BR ALIGN="LEFT"/></TD></TR>
-<TR><TD ALIGN="LEFT">+ <U>fromNotation(string) : Position</U><BR ALIGN="LEFT"/>+ toNotation() : string<BR ALIGN="LEFT"/>+ getX() : int<BR ALIGN="LEFT"/>+ getY() : int<BR ALIGN="LEFT"/>+ operator==(Position) : bool<BR ALIGN="LEFT"/></TD></TR>
+<TR><TD ALIGN="LEFT">+ <U>fromNotation(string) : Position</U><BR ALIGN="LEFT"/>+ toNotation() : string<BR ALIGN="LEFT"/></TD></TR>
 </TABLE>>];
 
     Move [label=<
 <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">
 <TR><TD><B>Move</B></TD></TR>
 <TR><TD ALIGN="LEFT">+ from : Position<BR ALIGN="LEFT"/>+ to : Position<BR ALIGN="LEFT"/>+ piece_moved : ChessPiece*<BR ALIGN="LEFT"/>+ captured : shared_ptr&lt;ChessPiece&gt;<BR ALIGN="LEFT"/>+ captured_at : Position<BR ALIGN="LEFT"/>+ prev_had_moved : bool<BR ALIGN="LEFT"/>+ is_en_passant : bool<BR ALIGN="LEFT"/>+ is_castling : bool<BR ALIGN="LEFT"/>+ rook_moved : ChessPiece*<BR ALIGN="LEFT"/>+ rook_from : Position<BR ALIGN="LEFT"/>+ rook_to : Position<BR ALIGN="LEFT"/>+ rook_prev_had_moved : bool<BR ALIGN="LEFT"/>+ promoted_from : shared_ptr&lt;ChessPiece&gt;<BR ALIGN="LEFT"/></TD></TR>
-<TR><TD ALIGN="LEFT">+ Move(Position, Position, ChessPiece*,<BR ALIGN="LEFT"/>&#160;&#160;shared_ptr&lt;ChessPiece&gt;, Position, bool)<BR ALIGN="LEFT"/></TD></TR>
 </TABLE>>];
 
     // ===== FACTORY FUNCTIONS =====

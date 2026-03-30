@@ -39,8 +39,8 @@ void GraphicDisplay::update() {
             ChessPiece* piece = board.getPiece(Position{x, y});
             if (piece) {
                 XWindow::Color tc = (piece->getColor() == White)
-                    ? XWindow::Black   
-                    : XWindow::White;
+                    ? XWindow::White
+                    : XWindow::Black;
                 std::string sym(1, piece->symbol());
                 win.drawString(px + SQUARE / 2 - 5, py + SQUARE / 2 + 8, sym, tc);
             }

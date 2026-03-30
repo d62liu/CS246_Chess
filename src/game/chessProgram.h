@@ -15,7 +15,7 @@ private:
     PlayerType blackType = PlayerType::Human;
 
     void handleMove(std::istringstream& iss);
-    bool setupMode(); // returns true if done successfully
+    bool setupMode();
     bool validateSetup();
 
     static PlayerType parsePlayerType(const std::string& s);

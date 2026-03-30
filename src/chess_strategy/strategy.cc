@@ -8,12 +8,12 @@ import pieces;
 
 static int pieceValue(PieceType t) {
     switch (t) {
-        case PieceType::Pawn:   return 1;
+        case PieceType::Pawn: return 1;
         case PieceType::Knight: return 3;
         case PieceType::Bishop: return 3;
-        case PieceType::Rook:   return 5;
-        case PieceType::Queen:  return 9;
-        case PieceType::King:   return 0;
+        case PieceType::Rook: return 5;
+        case PieceType::Queen: return 9;
+        case PieceType::King: return 0;
         default: return 0;
     }
 }

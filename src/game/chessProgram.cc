@@ -34,12 +34,14 @@ void ChessProgram::handleMove(std::istringstream& iss) {
     if (cur == PlayerType::Human) {
         std::string fromStr, toStr;
         if (!(iss >> fromStr >> toStr)) return;
+        Position from = Position::fromNotation(fromStr);
+        Position to   = Position::fromNotation(toStr);
+        if (from.getX() < 0 || to.getX() < 0) return;
         PieceType promo = PieceType::Queen;
         std::string promoStr;
         if (iss >> promoStr && !promoStr.empty())
             promo = parsePromotion(promoStr[0]);
-        game.makeMove(Position::fromNotation(fromStr),
-                      Position::fromNotation(toStr), promo);
+        game.makeMove(from, to, promo);
     } else {
         Board& b = game.getBoard();
         b.setNotify(false);
@@ -88,10 +90,13 @@ bool ChessProgram::validateSetup() {
 
 bool ChessProgram::setupMode() {
     Board& b = game.getBoard();
+    b.setNotify(false);
     b.reset();
     for (int x = 0; x < 8; ++x)
         for (int y = 0; y < 8; ++y)
             b.removePiece(Position{x, y});
+    b.setNotify(true);
+    b.notifyObservers();
 
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -103,12 +108,16 @@ bool ChessProgram::setupMode() {
             std::string pieceStr, squareStr;
             if (!(iss >> pieceStr >> squareStr)) continue;
             if (pieceStr.empty()) continue;
-            b.placePiece(Position::fromNotation(squareStr), pieceStr[0]);
+            Position pos = Position::fromNotation(squareStr);
+            if (pos.getX() < 0) continue;
+            b.placePiece(pos, pieceStr[0]);
 
         } else if (cmd == "-") {
             std::string squareStr;
             if (!(iss >> squareStr)) continue;
-            b.removePiece(Position::fromNotation(squareStr));
+            Position pos = Position::fromNotation(squareStr);
+            if (pos.getX() < 0) continue;
+            b.removePiece(pos);
 
         } else if (cmd == "=") {
             std::string colorStr;

@@ -59,8 +59,6 @@ void XWindow::flush() { XFlush(display); }
 
 #else
 
-// ── Stub: X11 not available — compiles cleanly, throws at construction ────────
-
 XWindow::XWindow(int, int) {
     throw std::runtime_error(
         "Graphical display unavailable: install XQuartz and rebuild with -DHAVE_X11");
