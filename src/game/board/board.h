@@ -22,12 +22,12 @@ export struct Move {
     bool is_en_passant = false;
     bool is_castling = false;
 
-    ChessPiece* rook_moved = nullptr;         // non-owning: rook remains in grid
+    ChessPiece* rook_moved = nullptr;        
     Position rook_from = Position{0, 0};
     Position rook_to   = Position{0, 0};
     bool rook_prev_had_moved = false;
 
-    std::shared_ptr<ChessPiece> promoted_from; // owns original pawn after promotion
+    std::shared_ptr<ChessPiece> promoted_from; 
 };
 
 export class Board : public Subject {

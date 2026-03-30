@@ -1,16 +1,19 @@
 CXX      = g++-15
 CXXFLAGS = -std=c++23 -fmodules-ts -Wall -Wextra -Isrc
-STD_MOD  = /opt/homebrew/Cellar/gcc/15.2.0_1/include/c++/15/bits/std.cc
 TARGET   = chess
+
+STD_MOD := $(shell find $$($(CXX) -print-search-dirs 2>/dev/null | grep install | awk '{print $$2}') \
+             /opt/homebrew/Cellar/gcc /usr/lib/gcc /usr/local/lib/gcc \
+             -name 'std.cc' -path '*/bits/*' 2>/dev/null | head -1)
 
 ifneq ($(wildcard /opt/X11/include/X11/Xlib.h),)
     CXXFLAGS += -DHAVE_X11 -I/opt/X11/include
-    X11LIBS   = -L/opt/X11/lib -lX11
+    X11LIBS = -L/opt/X11/lib -lX11
 else ifneq ($(wildcard /usr/include/X11/Xlib.h),)
     CXXFLAGS += -DHAVE_X11
-    X11LIBS   = -lX11
+    X11LIBS = -lX11
 else
-    X11LIBS   =
+    X11LIBS =
 endif
 
 std.o:
