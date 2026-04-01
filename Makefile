@@ -1,6 +1,6 @@
-CXX      = g++-15
-CXXFLAGS = -std=c++23 -fmodules-ts -Wall -Wextra -Isrc
-TARGET   = chess
+CXX = g++-15
+CXXFLAGS = -std=c++20 -fmodules-ts -Wall -Wextra -Isrc
+TARGET = chess
 
 STD_MOD := $(shell find $$($(CXX) -print-search-dirs 2>/dev/null | grep install | awk '{print $$2}') \
              /opt/homebrew/Cellar/gcc /usr/lib/gcc /usr/local/lib/gcc \
