@@ -5,9 +5,9 @@
 unsigned long XWindow::allocColor(int r, int g, int b) {
     XColor c;
     Colormap cmap = DefaultColormap(display, DefaultScreen(display));
-    c.red   = static_cast<unsigned short>(r * 256);
+    c.red = static_cast<unsigned short>(r * 256);
     c.green = static_cast<unsigned short>(g * 256);
-    c.blue  = static_cast<unsigned short>(b * 256);
+    c.blue = static_cast<unsigned short>(b * 256);
     c.flags = DoRed | DoGreen | DoBlue;
     XAllocColor(display, cmap, &c);
     return c.pixel;
@@ -30,10 +30,10 @@ XWindow::XWindow(int w, int h) : width{w}, height{h} {
 
     gc = XCreateGC(display, window, 0, nullptr);
 
-    colors[White]           = WhitePixel(display, screen);
-    colors[Black]           = BlackPixel(display, screen);
-    colors[LightSquare]     = allocColor(240, 217, 181);
-    colors[DarkSquare]      = allocColor(181, 136,  99);
+    colors[White] = WhitePixel(display, screen);
+    colors[Black] = BlackPixel(display, screen);
+    colors[LightSquare] = allocColor(240, 217, 181);
+    colors[DarkSquare] = allocColor(181, 136,  99);
     colors[HighlightSquare] = allocColor(130, 151, 105);
 }
 

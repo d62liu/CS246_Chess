@@ -8,7 +8,7 @@ import graphic_display;
 
 
 PlayerType ChessProgram::parsePlayerType(const std::string& s) {
-    if (s == "human")     return PlayerType::Human;
+    if (s == "human") return PlayerType::Human;
     if (s == "computer1") return PlayerType::Computer1;
     if (s == "computer2") return PlayerType::Computer2;
     if (s == "computer3") return PlayerType::Computer3;

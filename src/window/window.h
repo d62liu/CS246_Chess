@@ -10,8 +10,8 @@
 class XWindow {
 #ifdef HAVE_X11
     Display* display;
-    Window   window;
-    GC       gc;
+    Window window;
+    GC gc;
     unsigned long allocColor(int r, int g, int b);
 #endif
     int width, height;
