@@ -4,7 +4,7 @@ A terminal chess game written in C++ with an optional graphical display. Support
 
 ## Features
 
-- 4 AI difficulty levels
+- Multi-level AI engine: greedy heuristics (levels 1–3), 2-ply minimax (level 4), and 4-ply alpha-beta minimax with piece-square tables, and quiescence search (level 5)
 - Graphical display via X11 window
 - Custom board setup mode
 - Full chess rules (castling, en passant, promotion)

@@ -33,4 +33,13 @@ public:
     Move pickMove(Board& board, Color color) override;
 };
 
+export class Level5Strategy : public Strategy {
+    static constexpr int MAX_DEPTH = 4;
+    int alphaBeta(Board& board, int depth, int alpha, int beta, Color maximizing, Color root);
+    int quiesce(Board& board, int alpha, int beta, Color maximizing, Color root);
+    int evaluate(Board& board, Color color);
+public:
+    Move pickMove(Board& board, Color color) override;
+};
+
 export std::unique_ptr<Strategy> makeStrategy(PlayerType type);
