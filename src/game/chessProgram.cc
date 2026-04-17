@@ -13,6 +13,7 @@ PlayerType ChessProgram::parsePlayerType(const std::string& s) {
     if (s == "computer2") return PlayerType::Computer2;
     if (s == "computer3") return PlayerType::Computer3;
     if (s == "computer4") return PlayerType::Computer4;
+    if (s == "computer5") return PlayerType::Computer5;
     return PlayerType::Human;
 }
 
