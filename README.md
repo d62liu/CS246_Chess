@@ -19,7 +19,7 @@ make
 ## Usage
 
 ```
-game white human black computer4   # start a game
+game human computer4   # start a game
 move e2 e4                         # make a move
 resign                             # forfeit
 ```
